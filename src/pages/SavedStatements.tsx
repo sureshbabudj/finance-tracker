@@ -1,12 +1,8 @@
+'use client';
+
 import { FileText } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
-
-import {
-  deleteProcessedStatement,
-  getAllProcessedStatements,
-  ProcessedStatement,
-} from '../utils/localStorage';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +12,12 @@ import {
   ItemDescription,
   ItemTitle,
 } from '@/components/ui/item';
+
+import {
+  deleteProcessedStatement,
+  getAllProcessedStatements,
+  ProcessedStatement,
+} from '../utils/localStorage';
 
 export const SavedStatements = () => {
   const [savedStatements, setSavedStatements] = React.useState<

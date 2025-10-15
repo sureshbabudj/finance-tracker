@@ -1,8 +1,7 @@
+'use client';
+
 import { ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
-
-import { MarkdownRenderer, StatCard } from './UI';
-import { Button } from './ui/button';
 
 import {
   Collapsible,
@@ -10,6 +9,9 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Transaction } from '@/types';
+
+import { MarkdownRenderer, StatCard } from './UI';
+import { Button } from './ui/button';
 
 export function TransactionsSummary({
   transactions,

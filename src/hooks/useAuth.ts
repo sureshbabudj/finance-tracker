@@ -1,13 +1,15 @@
+'use client';
+
 import {
+  AuthError,
+  signOut as firebaseSignOut,
+  getRedirectResult,
   onAuthStateChanged,
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult,
-  signOut as firebaseSignOut,
   User,
-  AuthError,
 } from 'firebase/auth';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { auth, googleProvider } from '../firebase/config';
 

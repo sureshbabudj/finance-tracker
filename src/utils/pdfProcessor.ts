@@ -1,14 +1,23 @@
+import { httpsCallable } from 'firebase/functions';
 import * as pdfjsLib from 'pdfjs-dist';
+
+import { functions } from '@/firebase/config';
 
 import { Transaction } from '../types';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-// --- API Configuration and Payload ---
-const MODEL_NAME = import.meta.env.VITE_GEMINI_MODEL_NAME;
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+export interface GenkitPayload {
+  contents: { parts: { text: string }[] }[];
+  systemInstruction: { parts: { text: string }[] };
+}
+
+export interface GenkitResponse {
+  data: {
+    response: any;
+  };
+}
 
 // This schema strictly defines the structure we want the model to return.
 const RESPONSE_SCHEMA = {
@@ -135,27 +144,14 @@ const processRawPDFText = (rawText: string): string => {
 };
 
 // --- Utility Functions ---
-const fetchWithRetry = async (
-  url: string,
-  options: RequestInit,
-  maxRetries = 5
-): Promise<Response | undefined> => {
+const fetchWithRetry = async (payload: GenkitPayload, maxRetries = 5) => {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await fetch(url, options);
-      if (response.status === 429) {
-        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-        // Rate limit hit, retrying after delay
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(
-          `API call failed with status ${response.status}: ${errorBody}`
-        );
-      }
-      return response;
+      const genkitSecureProxy = httpsCallable(functions, 'genkitProxy', {
+        timeout: 300000, // 5 minutes
+      });
+      const result = await genkitSecureProxy(payload);
+      return (result as GenkitResponse).data.response;
     } catch (error) {
       // Attempt failed, will retry if attempts remaining
       if (i === maxRetries - 1) throw error;
@@ -213,13 +209,8 @@ Return a JSON array of transaction objects with the exact schema provided.
   };
 
   try {
-    const response = await fetchWithRetry(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const result = response ? await response.json() : null;
-    const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const response = await fetchWithRetry(payload);
+    const jsonText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!jsonText) {
       throw new Error('API response was empty or incorrectly structured.');
@@ -319,13 +310,8 @@ Return a JSON array of transaction objects with the exact schema provided.
   };
 
   try {
-    const response = await fetchWithRetry(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const result = response ? await response.json() : null;
-    const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const response = await fetchWithRetry(payload);
+    const jsonText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!jsonText) {
       throw new Error('API response was empty or incorrectly structured.');

@@ -1,8 +1,6 @@
+'use client';
+
 import React from 'react';
-
-import { useAuth } from '../hooks/useAuth';
-
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 import {
   DropdownMenu,
@@ -12,6 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
+import { useAuth } from '../hooks/useAuth';
+
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 const UserProfile: React.FC = () => {
   const { user, signOut } = useAuth();

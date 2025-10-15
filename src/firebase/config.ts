@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v9-compat and later, measurementId is optional
@@ -30,4 +31,11 @@ googleProvider.setCustomParameters({
   prompt: 'select_account',
 });
 
+export const functions = getFunctions(app, 'us-central1');
+
 export default app;
+
+if (window.location.hostname === 'localhost') {
+  // Port 5001 is the default for the Functions Emulator
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+}

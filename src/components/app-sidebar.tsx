@@ -1,4 +1,3 @@
-// src/components/app-sidebar.tsx
 import {
   Home,
   PlusCircle,
@@ -7,8 +6,6 @@ import {
   Wallet,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-import { Button } from './ui/button';
 
 import {
   Sidebar,
@@ -22,6 +19,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+
+import { Button } from './ui/button';
 
 const items = [
   {

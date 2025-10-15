@@ -3,7 +3,10 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 
-// https://vitejs.dev/config/
+// The full URL of your local emulator function (used for proxying)
+const EMULATOR_FUNCTION_URL =
+  'http://127.0.0.1:5001/financial-analyzer-c6463/us-central1/genkitProxy';
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -13,57 +16,11 @@ export default defineConfig({
   },
   server: {
     port: 5500,
-    open: true,
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Cross-Origin-Embedder-Policy': 'unsafe-none',
-    },
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: id => {
-          // Split vendor libraries into separate chunks
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('firebase')) {
-              return 'firebase-vendor';
-            }
-            if (id.includes('pdfjs-dist')) {
-              return 'pdf-vendor';
-            }
-            // All other node_modules go to vendor
-            return 'vendor';
-          }
-
-          // Split our components
-          if (id.includes('/src/components/BankStatementAnalyzer')) {
-            return 'analyzer';
-          }
-          if (id.includes('/src/utils/pdfProcessor')) {
-            return 'pdf-utils';
-          }
-          if (
-            id.includes('/src/components/') &&
-            (id.includes('LoginScreen') ||
-              id.includes('LoadingSpinner') ||
-              id.includes('UI'))
-          ) {
-            return 'ui-components';
-          }
-        },
+    proxy: {
+      '/genkit-api': {
+        target: EMULATOR_FUNCTION_URL,
+        changeOrigin: true,
       },
     },
-    chunkSizeWarningLimit: 1000, // Increase warning limit to 1MB
-  },
-  define: {
-    global: 'globalThis',
-  },
-  optimizeDeps: {
-    include: ['pdfjs-dist'],
   },
 });

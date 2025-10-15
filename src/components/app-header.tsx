@@ -1,9 +1,9 @@
 import { Bell, Menu, Settings } from 'lucide-react';
 
-import UserProfile from './UserProfile';
-
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
+
+import UserProfile from './UserProfile';
 
 export function AppHeader() {
   const { toggleSidebar } = useSidebar();

@@ -1,5 +1,8 @@
-import { ArrowDownUp, Cpu } from 'lucide-react';
+'use client';
+
+import { ArrowDownUp, Cpu, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   Card,
@@ -19,6 +22,7 @@ import {
 import {
   extractTextFromPDF,
   fetchWithRetry,
+  GenkitPayload,
   processAndCategorizeCSVTransactions,
   processAndCategorizeTransactions,
   processCSVFile,
@@ -29,14 +33,10 @@ import { Filters, TransactionsTable } from './transactions-table';
 import { TransactionExplanationModal } from './UI';
 import { Button } from './ui/button';
 
-// --- API Configuration ---
-const MODEL_NAME = import.meta.env.VITE_GEMINI_MODEL_NAME;
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
-
 const BankStatementAnalyzer: React.FC<{ statementKey?: string }> = ({
   statementKey,
 }) => {
+  const navigate = useNavigate();
   // All state variables
   const [rawText, setRawText] = useState<string>('');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -137,13 +137,17 @@ const BankStatementAnalyzer: React.FC<{ statementKey?: string }> = ({
       };
 
       // Save to localStorage
-      saveProcessedStatement(processedStatement);
+      const key = await saveProcessedStatement(processedStatement);
 
-      // Set the final results
-      setTransactions(processedTransactions);
+      // navigate to the new statement view if key is available with react-router-dom
+
       setFormatAnalysis(
         `✅ Successfully processed ${processedTransactions.length} transactions! (Saved to storage)`
       );
+
+      if (key) {
+        navigate(`/details/${key}`);
+      }
     } catch (error) {
       console.error('PDF processing error:', error);
       const errorMessage =
@@ -192,12 +196,13 @@ const BankStatementAnalyzer: React.FC<{ statementKey?: string }> = ({
       };
 
       // Save to localStorage
-      saveProcessedStatement(processedStatement);
-
-      setTransactions(processedTransactions);
+      const key = await saveProcessedStatement(processedStatement);
       setFormatAnalysis(
         `✅ Successfully processed ${processedTransactions.length} transactions! (Saved to storage)`
       );
+      if (key) {
+        navigate(`/details/${key}`);
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
@@ -276,19 +281,14 @@ Format the output using markdown headers (## and ###) and lists (*).`;
 
     const reportUserQuery = `Analyze these transactions:\n\n${transactionsString}`;
 
-    const payload = {
+    const payload: GenkitPayload = {
       contents: [{ parts: [{ text: reportUserQuery }] }],
       systemInstruction: { parts: [{ text: reportSystemInstruction }] },
     };
 
     try {
-      const response = await fetchWithRetry(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const result = response ? await response.json() : null;
-      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const response = await fetchWithRetry(payload);
+      const text = response?.candidates?.[0]?.content?.parts?.[0]?.text;
       setAnalysisReport(
         text ||
           'Could not generate report. The model returned an empty response.'
@@ -321,13 +321,8 @@ Format the output using markdown headers (## and ###) and lists (*).`;
     };
 
     try {
-      const response = await fetchWithRetry(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const result = response ? await response.json() : null;
-      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const response = await fetchWithRetry(payload);
+      const text = response?.candidates?.[0]?.content?.parts?.[0]?.text;
       setTransactionExplanation(text || 'Could not generate explanation.');
     } catch (e) {
       console.error('Explanation error:', e);
@@ -470,16 +465,18 @@ Format the output using markdown headers (## and ###) and lists (*).`;
                       d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
                     ></path>
                   </svg>
-                  Processing PDF...
+                  Processing file...
                 </div>
               )}
               <div className='mt-3 flex justify-end'>
-                <button
+                <Button
                   onClick={clearAll}
-                  className='px-3 py-1 text-sm text-gray-600 hover:text-red-600 transition-colors'
+                  variant='destructive'
+                  className=' transition-colors'
                 >
-                  🗑️ Clear & Reset
-                </button>
+                  <Trash2 className='w-4 h-4 mr-1' />
+                  Clear & Reset
+                </Button>
               </div>
             </div>
 
@@ -515,14 +512,14 @@ Format the output using markdown headers (## and ###) and lists (*).`;
             <Button
               onClick={processManualText}
               size='lg'
-              disabled={isAnalyzingFormat || !rawText.trim()}
+              disabled={isAnalyzingFormat || isProcessingFile}
               className={`w-full px-4 py-3 text-white font-semibold rounded-lg transition duration-200 shadow-md ${
-                isAnalyzingFormat || !rawText.trim()
+                isAnalyzingFormat || isProcessingFile
                   ? 'bg-indigo-400 cursor-not-allowed'
                   : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
               }`}
             >
-              {isAnalyzingFormat ? (
+              {isAnalyzingFormat || isProcessingFile ? (
                 <span className='flex items-center justify-center'>
                   <Cpu className='w-5 h-5 mr-2 animate-spin' />
                   Processing & Categorizing...

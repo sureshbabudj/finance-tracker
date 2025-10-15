@@ -29,7 +29,9 @@ export const generateStorageKey = (
 };
 
 // Save processed statement to localStorage
-export const saveProcessedStatement = (statement: ProcessedStatement): void => {
+export const saveProcessedStatement = async (
+  statement: ProcessedStatement
+): Promise<string | undefined> => {
   try {
     const key = generateStorageKey(
       statement.accountHolder,
@@ -37,10 +39,11 @@ export const saveProcessedStatement = (statement: ProcessedStatement): void => {
       statement.toDate,
       statement.timestamp
     );
-    localStorage.setItem(key, JSON.stringify({ ...statement, id: key }));
-    console.log(`Saved statement with key: ${key}`);
+    await localStorage.setItem(key, JSON.stringify({ ...statement, id: key }));
+    return key;
   } catch (error) {
     console.error('Error saving statement to localStorage:', error);
+    return undefined;
   }
 };
 

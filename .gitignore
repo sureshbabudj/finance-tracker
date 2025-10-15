@@ -155,6 +155,7 @@ Thumbs.db
 .firebaserc
 firebase-debug.log
 firebase-debug.*.log
+.runtimeconfig.json
 
 # Vite
 vite.config.js.timestamp-*
@@ -220,3 +221,5 @@ playwright/.cache/
 
 # Auto-generated files
 types/generated/
+
+functions/lib
