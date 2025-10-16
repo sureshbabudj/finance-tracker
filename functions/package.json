@@ -5,6 +5,7 @@
     "build:watch": "tsc --watch",
     "lint": "eslint .",
     "serve": "firebase emulators:start --only functions",
+    "serve:all": "firebase emulators:start --only functions,firestore  --import=\"./firebase-data\" --export-on-exit=\"./firebase-data\"",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",

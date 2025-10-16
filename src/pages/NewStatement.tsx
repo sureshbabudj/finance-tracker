@@ -1,26 +1,9 @@
-import React, { Suspense } from 'react';
-import { useParams } from 'react-router-dom';
+import React from 'react';
 
-import LoadingSpinner from '@/components/LoadingSpinner';
+import BankStatementAnalyzer from '@/components/BankStatementAnalyzer';
 
-// Lazy load the heavy components
-const BankStatementAnalyzer = React.lazy(
-  () => import('@/components/BankStatementAnalyzer')
-);
-
-/**
- * Main App Component - Entry point with authentication and lazy loading
- */
 const NewStatement: React.FC = () => {
-  const { id } = useParams();
-  // Show the main application with lazy loading
-  return (
-    <Suspense
-      fallback={<LoadingSpinner message='Loading Bank Statement Analyzer...' />}
-    >
-      <BankStatementAnalyzer statementKey={id} />
-    </Suspense>
-  );
+  return <BankStatementAnalyzer />;
 };
 
 export default NewStatement;

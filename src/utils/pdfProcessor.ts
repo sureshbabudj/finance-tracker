@@ -5,6 +5,8 @@ import { functions } from '@/firebase/config';
 
 import { Transaction } from '../types';
 
+import { extractStatementMetadata, generateStorageKey } from './localStorage';
+
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -197,6 +199,14 @@ CATEGORIZATION GUIDELINES:
 Return a JSON array of transaction objects with the exact schema provided.
 `;
 
+  const metadata = extractStatementMetadata(rawPdfText);
+  const statementId = generateStorageKey(
+    metadata.accountHolder,
+    metadata.fromDate,
+    metadata.toDate,
+    new Date().toISOString()
+  );
+
   const payload = {
     contents: [
       { parts: [{ text: `Process this bank statement:\n\n${processedText}` }] },
@@ -206,6 +216,8 @@ Return a JSON array of transaction objects with the exact schema provided.
       responseMimeType: 'application/json',
       responseSchema: RESPONSE_SCHEMA,
     },
+    statementId,
+    task: { type: 'process-transactions' },
   };
 
   try {
@@ -298,6 +310,14 @@ IMPORTANT CSV CONSIDERATIONS:
 Return a JSON array of transaction objects with the exact schema provided.
 `;
 
+  const metadata = extractStatementMetadata(csvText);
+  const statementId = generateStorageKey(
+    metadata.accountHolder,
+    metadata.fromDate,
+    metadata.toDate,
+    new Date().toISOString()
+  );
+
   const payload = {
     contents: [
       { parts: [{ text: `Process this CSV bank statement:\n\n${csvText}` }] },
@@ -307,6 +327,8 @@ Return a JSON array of transaction objects with the exact schema provided.
       responseMimeType: 'application/json',
       responseSchema: RESPONSE_SCHEMA,
     },
+    statementId,
+    task: { type: 'process-transactions' },
   };
 
   try {

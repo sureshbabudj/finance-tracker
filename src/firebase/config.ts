@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 
 // Your web app's Firebase configuration
@@ -32,10 +33,15 @@ googleProvider.setCustomParameters({
 });
 
 export const functions = getFunctions(app, 'us-central1');
+export const db = getFirestore(app);
 
 export default app;
 
+// Connect to emulators when running locally
 if (window.location.hostname === 'localhost') {
-  // Port 5001 is the default for the Functions Emulator
-  connectFunctionsEmulator(functions, 'localhost', 5001);
+  // Connect to Functions Emulator
+  connectFunctionsEmulator(functions, 'localhost', 5003);
+
+  // Connect to Firestore Emulator
+  connectFirestoreEmulator(db, 'localhost', 8083);
 }

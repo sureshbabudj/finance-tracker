@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 
 import DashboardLayout from './pages/DashboardLayout';
+import Details from './pages/Details';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import NewStatement from './pages/NewStatement';
@@ -33,7 +34,7 @@ const App = () => {
           path='/details/:id'
           element={
             <ProtectedRoute>
-              <NewStatement />
+              <Details />
             </ProtectedRoute>
           }
         />

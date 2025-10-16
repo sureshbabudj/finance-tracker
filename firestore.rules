@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // --- Rule for User's Private Data ---
+    // Matches the path: artifacts/{appId}/users/{userId}/statements/{statementId}
+    // The $userId must match the user's authenticated ID.
+    match /artifacts/{appId}/users/{userId}/{document=**} {
+      // Line L21 is likely here. This permits the 'list' (query) operation.
+      allow read: if request.auth.uid == userId;
+
+      // Allow the function (Admin SDK) to write data, bypassing user rules.
+      // This is generally not needed for Client SDK reads, but is good practice.
+      // NOTE: This rule may vary based on your exact structure, but the key is checking request.auth.uid
+
+      // Check if this is the rule for the collection being queried (statements)
+      // This allows the user to read/query their own private documents.
+      allow create, update, delete: if request.auth.uid == userId;
+    }
+
+    // --- Specific Rule for Statements Collection ---
+    // If you're querying the "statements" collection specifically:
+    match /artifacts/{appId}/users/{userId}/statements/{statementId} {
+        // L21 is likely this rule below. Ensure the "list" permission is true
+        // only if the authenticated user's ID matches the {userId} path variable.
+        allow list, get: if request.auth.uid == userId;
+        allow write: if request.auth.uid == userId;
+    }
+
+    // --- Transactions Subcollection Rule ---
+    match /artifacts/{appId}/users/{userId}/statements/{statementId}/transactions/{transactionId} {
+        allow read: if request.auth.uid == userId;
+    }
+
+    // --- Catch-all rule (must be secure) ---
+    match /{document=**} {
+      allow read, write: if false; // Deny all other access by default
+    }
+
+  }
+}
+

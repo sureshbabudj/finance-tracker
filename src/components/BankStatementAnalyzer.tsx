@@ -11,11 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
+import { getAllTransactions } from '@/utils/firestoreStorage';
 
 import { SortConfig, Transaction } from '../types';
 import {
   extractStatementMetadata,
-  getProcessedStatement,
   ProcessedStatement,
   saveProcessedStatement,
 } from '../utils/localStorage';
@@ -37,6 +38,7 @@ const BankStatementAnalyzer: React.FC<{ statementKey?: string }> = ({
   statementKey,
 }) => {
   const navigate = useNavigate();
+  const { loading, user } = useAuth();
   // All state variables
   const [rawText, setRawText] = useState<string>('');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -232,7 +234,19 @@ const BankStatementAnalyzer: React.FC<{ statementKey?: string }> = ({
 
   useEffect(() => {
     // --- Load Saved Statement ---
-    const loadSavedStatement = (statement: ProcessedStatement) => {
+    const loadSavedStatement = async (statementKey: string) => {
+      if (!user?.uid) {
+        return;
+      }
+      const transactions = await getAllTransactions(user.uid, statementKey);
+
+      const statement = {
+        id: statementKey,
+        rawText: '',
+        transactions,
+        accountHolder: '',
+      };
+
       setRawText(statement.rawText);
       setTransactions(statement.transactions);
       setFormatAnalysis(
@@ -245,14 +259,11 @@ const BankStatementAnalyzer: React.FC<{ statementKey?: string }> = ({
       setTransactionExplanation(null);
     };
     if (statementKey) {
-      const statement = getProcessedStatement(statementKey);
-      if (statement) {
-        loadSavedStatement(statement);
-      }
+      loadSavedStatement(statementKey);
     } else {
       clearAll();
     }
-  }, [statementKey]);
+  }, [user, statementKey]);
 
   // --- Financial Analysis Report ---
   const generateAnalysisReport = useCallback(async () => {
@@ -387,6 +398,35 @@ Format the output using markdown headers (## and ###) and lists (*).`;
     return sortConfig.direction === 'ascending' ? '▲' : '▼';
   };
 
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='text-center'>
+          <svg
+            className='animate-spin mx-auto h-10 w-10 text-indigo-600'
+            xmlns='http://www.w3.org/2000/svg'
+            fill='none'
+            viewBox='0 0 24 24'
+          >
+            <circle
+              className='opacity-25'
+              cx='12'
+              cy='12'
+              r='10'
+              stroke='currentColor'
+              strokeWidth='4'
+            />
+            <path
+              className='opacity-75'
+              fill='currentColor'
+              d='M12 2a10 10 0 0 1 0 20 10 10 0 0 1 0-20z'
+            />
+          </svg>
+        </div>
+      </div>
+    );
+  }
+
   // --- Main Render Function ---
   return (
     <div className='p-4'>
@@ -473,6 +513,7 @@ Format the output using markdown headers (## and ###) and lists (*).`;
                   onClick={clearAll}
                   variant='destructive'
                   className=' transition-colors'
+                  disabled={isProcessingFile || isAnalyzingFormat}
                 >
                   <Trash2 className='w-4 h-4 mr-1' />
                   Clear & Reset
