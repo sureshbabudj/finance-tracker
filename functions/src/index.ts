@@ -195,15 +195,11 @@ export const genkitProxy = onCall<GenkitPayload>(
         );
 
         // 5. Return success data to the client
-        logger.info(
-          JSON.stringify({
-            status: 'success',
-            message: `Successfully classified and saved ${transactions.length} transactions.`,
-            statementId: statementId,
-          })
-        );
-
-        return result;
+        return {
+          status: 'success',
+          message: `Successfully classified and saved ${transactions.length} transactions.`,
+          statementId: statementId,
+        };
       }
       return result;
     } catch (error) {
